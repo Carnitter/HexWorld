@@ -34,7 +34,7 @@ public class HexGridTest : MonoBehaviour
       {
         Debug.Log($"Creating chunk {cx},{cy}");
 
-        HexChunk chunk = new HexChunk(cx, cy, material);
+        HexChunk chunk = new HexChunk(cx, cy, chunkSize, material);
 
         for (int x = 0; x < chunkSize; x++)
         {

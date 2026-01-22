@@ -1,10 +1,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class HexChunk 
+public class HexChunk
 {
   public readonly int chunkX;
   public readonly int chunkY;
+  public readonly int chunkSize;
 
   private List<HexCell> cells;
 
@@ -13,14 +14,22 @@ public class HexChunk
   private MeshFilter meshFilter;
   private MeshRenderer meshRenderer;
 
-  public HexChunk(int chunkX, int chunkY, Material material)
+  public HexChunk(int chunkX, int chunkY, int chunkSize, Material material)
   {
     this.chunkX = chunkX;
     this.chunkY = chunkY;
+    this.chunkSize = chunkSize;
 
     cells = new List<HexCell>();
 
     gameObject = new GameObject($"HexChunk ({chunkX},{chunkY})");
+
+    // Position the chunk in world space
+    HexCoord chunkOriginCoord =
+      new HexCoord(chunkX * chunkSize, chunkY * chunkSize);
+
+    gameObject.transform.position =
+      HexMetrics.HexToWorld(chunkOriginCoord);
 
     mesh = new Mesh();
     mesh.name = "HexChunkMesh";
@@ -34,7 +43,7 @@ public class HexChunk
 
   public void AddCell(HexCell cell)
   {
-    cells.Add( cell );
+    cells.Add(cell);
   }
 
   public void BuildMesh()
@@ -43,15 +52,21 @@ public class HexChunk
     List<int> triangles = new List<int>();
 
     int vertexIndex = 0;
-    
+
     foreach (HexCell cell in cells)
     {
-      Vector3 center = HexMetrics.HexToWorld(cell.coord);
+      // Convert world coord -> local chunk coord
+      HexCoord localCoord = new HexCoord(
+        cell.coord.collumn - chunkX * chunkSize,
+        cell.coord.row - chunkY * chunkSize
+      );
+
+      Vector3 center = HexMetrics.HexToWorld(localCoord);
 
       // Center vertex
-      vertices.Add( center );
+      vertices.Add(center);
 
-      // corner vertices
+      // Corner vertices
       for (int i = 0; i < 6; i++)
       {
         vertices.Add(center + HexMetrics.corners[i]);
@@ -62,10 +77,10 @@ public class HexChunk
       {
         triangles.Add(vertexIndex);
         triangles.Add(vertexIndex + i + 1);
-        triangles.Add(vertexIndex + (i == 5 ? 1: i + 2));
+        triangles.Add(vertexIndex + (i == 5 ? 1 : i + 2));
       }
 
-      vertexIndex+= 7;
+      vertexIndex += 7;
     }
 
     mesh.Clear();
@@ -73,7 +88,5 @@ public class HexChunk
     mesh.triangles = triangles.ToArray();
     mesh.RecalculateNormals();
     mesh.RecalculateBounds();
-    
   }
-
 }
